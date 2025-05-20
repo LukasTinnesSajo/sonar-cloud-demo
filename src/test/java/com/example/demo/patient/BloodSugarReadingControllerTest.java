@@ -11,10 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.time.temporal.ChronoUnit;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -24,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @ActiveProfiles("test")
-public class BloodSugarReadingControllerTest {
+class BloodSugarReadingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -201,7 +200,7 @@ public class BloodSugarReadingControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updatedReading)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("ID in path does not match ID in request body")));
+                .andExpect(jsonPath("$.message", containsString("ID in the path does not match the ID in the request body")));
     }
 
     @Test
@@ -225,6 +224,6 @@ public class BloodSugarReadingControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updatedReading)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("patientId in path does not match patientId in request body")));
+                .andExpect(jsonPath("$.message", containsString("Patient ID in the path does not match the patient ID in the request body")));
     }
 }

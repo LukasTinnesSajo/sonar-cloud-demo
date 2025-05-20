@@ -9,10 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.stream.Collectors;
-import com.example.demo.patient.BloodSugarReadingDTO;
-import com.example.demo.patient.BloodSugarReadingRepository;
-import com.example.demo.patient.PatientRepository;
+
 
 @RestController
 @RequestMapping(ApiConstants.Paths.API_PATIENTS_READINGS)
@@ -29,7 +26,7 @@ public class BloodSugarReadingController {
             @PathVariable Long patientId, 
             @Valid @RequestBody BloodSugarReadingDTO readingDTO) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.PATIENT, ApiConstants.ID, patientId));
         
         BloodSugarReading reading = new BloodSugarReading();
         reading.setPatient(patient);
@@ -44,11 +41,11 @@ public class BloodSugarReadingController {
     public ResponseEntity<List<BloodSugarReadingDTO>> getAllReadingsForPatient(@PathVariable Long patientId) {
         // Ensure patient exists
         patientRepository.findById(patientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.PATIENT, ApiConstants.ID, patientId));
 
         List<BloodSugarReadingDTO> readingDTOs = bloodSugarReadingRepository.findByPatientId(patientId).stream()
                 .map(BloodSugarReadingDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
         return new ResponseEntity<>(readingDTOs, HttpStatus.OK);
     }
 
@@ -56,13 +53,13 @@ public class BloodSugarReadingController {
     public ResponseEntity<BloodSugarReadingDTO> getReadingById(@PathVariable Long patientId, @PathVariable Long readingId) {
         // Ensure patient exists
         patientRepository.findById(patientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.PATIENT, ApiConstants.ID, patientId));
 
         BloodSugarReading reading = bloodSugarReadingRepository.findById(readingId)
-                .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.BLOOD_SUGAR_READING, ApiConstants.ID, readingId));
 
         if (!reading.getPatient().getId().equals(patientId)) {
-            throw new IllegalArgumentException("Reading does not belong to the specified patient.");
+            throw new IllegalArgumentException(ApiConstants.ExceptionMessage.READING_NOT_BELONG);
         }
         return new ResponseEntity<>(BloodSugarReadingDTO.fromEntity(reading), HttpStatus.OK);
     }
@@ -83,13 +80,13 @@ public class BloodSugarReadingController {
         }
 
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.PATIENT, ApiConstants.ID, patientId));
 
         BloodSugarReading reading = bloodSugarReadingRepository.findById(readingId)
-                .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.BLOOD_SUGAR_READING, ApiConstants.ID, readingId));
 
         if (!reading.getPatient().getId().equals(patient.getId())) {
-            throw new IllegalArgumentException("Reading does not belong to the specified patient.");
+            throw new IllegalArgumentException(ApiConstants.ExceptionMessage.READING_NOT_BELONG);
         }
 
         reading.setTimestamp(readingDetailsDTO.getTimestamp());
@@ -102,13 +99,13 @@ public class BloodSugarReadingController {
     @DeleteMapping("/{readingId}")
     public ResponseEntity<Void> deleteReading(@PathVariable Long patientId, @PathVariable Long readingId) {
         Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.PATIENT, ApiConstants.ID, patientId));
 
         BloodSugarReading reading = bloodSugarReadingRepository.findById(readingId)
-                .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.BLOOD_SUGAR_READING, ApiConstants.ID, readingId));
 
         if (!reading.getPatient().getId().equals(patient.getId())) {
-            throw new IllegalArgumentException("Reading does not belong to the specified patient.");
+            throw new IllegalArgumentException(ApiConstants.ExceptionMessage.READING_NOT_BELONG);
         }
 
         bloodSugarReadingRepository.delete(reading);

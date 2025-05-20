@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -24,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional // Rollback transactions after each test
 @ActiveProfiles("test") // Ensure test properties are loaded
-public class PatientControllerTest {
+class PatientControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -160,6 +159,6 @@ public class PatientControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updatedDetails)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", containsString("ID in path does not match ID in request body")));
+                .andExpect(jsonPath("$.message", containsString("ID in the path does not match the ID in the request body")));
     }
 }

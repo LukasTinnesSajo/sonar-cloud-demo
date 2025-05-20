@@ -10,11 +10,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.context.request.WebRequest;
-
-import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -52,7 +50,7 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         
         @SuppressWarnings("unchecked")
-        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        java.util.Map<String, Object> body = (java.util.Map<String, Object>) response.getBody();
         assertNotNull(body);
         
         assertEquals(status.value(), body.get("status"));
@@ -81,7 +79,7 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         
         @SuppressWarnings("unchecked")
-        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        java.util.Map<String, Object> body = (java.util.Map<String, Object>) response.getBody();
         assertNotNull(body);
         
         assertEquals(HttpStatus.NOT_FOUND.value(), body.get("status"));
@@ -104,7 +102,7 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         
         @SuppressWarnings("unchecked")
-        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        java.util.Map<String, Object> body = (java.util.Map<String, Object>) response.getBody();
         assertNotNull(body);
         
         assertEquals(HttpStatus.BAD_REQUEST.value(), body.get("status"));

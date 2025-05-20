@@ -9,9 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.stream.Collectors;
-import com.example.demo.patient.PatientDTO;
-import com.example.demo.patient.PatientRepository;
+
 
 @RestController
 @RequestMapping(ApiConstants.Paths.API_PATIENTS)
@@ -36,14 +34,14 @@ public class PatientController {
     public ResponseEntity<List<PatientDTO>> getAllPatients() {
         List<PatientDTO> patientDTOs = patientRepository.findAll().stream()
                 .map(PatientDTO::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(patientDTOs);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PatientDTO> getPatientById(@PathVariable Long id) {
         Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.PATIENT, ApiConstants.ID, id));
         return ResponseEntity.ok(PatientDTO.fromEntity(patient));
     }
 
@@ -55,7 +53,7 @@ public class PatientController {
         }
         
         Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.PATIENT, ApiConstants.ID, id));
         
         patient.setFirstName(patientDTO.getFirstName());
         patient.setLastName(patientDTO.getLastName());
@@ -68,7 +66,7 @@ public class PatientController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePatient(@PathVariable Long id) {
         Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ApiConstants.PATIENT, ApiConstants.ID, id));
         patientRepository.delete(patient);
         return ResponseEntity.noContent().build();
     }

@@ -21,7 +21,10 @@ public final class ApiConstants {
     public static final String BLOOD_SUGAR_READING = "BloodSugarReading";
     
     // Validation Messages
-    public static class Validation {
+    public static final class Validation {
+        private Validation() {
+            // Private constructor to prevent instantiation
+        }
         // Patient
         public static final String FIRST_NAME_REQUIRED = "First name is required";
         public static final String FIRST_NAME_SIZE = "First name must be between 1 and 100 characters";
@@ -42,31 +45,48 @@ public final class ApiConstants {
     }
     
     // Exception Messages
-    public static class ExceptionMessage {
-        public static final String ID_MISMATCH = "ID in path does not match ID in request body";
-        public static final String PATIENT_ID_MISMATCH = "patientId in path does not match patientId in request body";
+    public static final class ExceptionMessage {
+        private ExceptionMessage() {
+            // Private constructor to prevent instantiation
+        }
+        public static final String PATIENT_NOT_FOUND = "Patient not found with id : '";
+        public static final String READING_NOT_FOUND = "Blood sugar reading not found with id : '";
         public static final String READING_NOT_BELONG = "Reading does not belong to the specified patient";
+        public static final String ID_MISMATCH = "ID in the path does not match the ID in the request body";
+        public static final String PATIENT_ID_MISMATCH = "Patient ID in the path does not match the patient ID in the request body";
     }
     
     // API Paths
-    public static class Paths {
+    public static final class Paths {
+        private Paths() {
+            // Private constructor to prevent instantiation
+        }
         public static final String API_PATIENTS = "/api/patients";
         public static final String API_PATIENTS_READINGS = "/api/patients/{patientId}/readings";
     }
     
     // Table Names
-    public static class Tables {
+    public static final class Tables {
+        private Tables() {
+            // Private constructor to prevent instantiation
+        }
         public static final String PATIENTS = "patients";
         public static final String BLOOD_SUGAR_READINGS = "blood_sugar_readings";
     }
     
     // Column Names
-    public static class Columns {
+    public static final class Columns {
+        private Columns() {
+            // Private constructor to prevent instantiation
+        }
         public static final String PATIENT_ID = "patient_id";
     }
     
     // Units
-    public static class Units {
+    public static final class Units {
+        private Units() {
+            // Private constructor to prevent instantiation
+        }
         public static final String MG_DL = "mg/dL";
         public static final String MMOL_L = "mmol/L";
     }
