@@ -1,26 +1,38 @@
 package com.example.demo.patient;
 
+import com.example.demo.constants.ApiConstants;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.constraints.*;
+import lombok.*;
+
 import java.time.LocalDate;
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PatientDTO {
     private Long id;
+    
+    @NotBlank(message = ApiConstants.Validation.FIRST_NAME_REQUIRED)
+    @Size(min = 1, max = 100, message = ApiConstants.Validation.FIRST_NAME_SIZE)
     private String firstName;
+    
+    @NotBlank(message = ApiConstants.Validation.LAST_NAME_REQUIRED)
+    @Size(min = 1, max = 100, message = ApiConstants.Validation.LAST_NAME_SIZE)
     private String lastName;
+    
+    @NotNull(message = ApiConstants.Validation.DOB_REQUIRED)
+    @PastOrPresent(message = ApiConstants.Validation.DOB_PAST_OR_PRESENT)
     private LocalDate dateOfBirth;
+    
     private List<BloodSugarReadingDTO> bloodSugarReadings;
 
-    // Constructors
-    public PatientDTO() {
-    }
-
-    public PatientDTO(Long id, String firstName, String lastName, LocalDate dateOfBirth, List<BloodSugarReadingDTO> bloodSugarReadings) {
-        this.id = id;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.dateOfBirth = dateOfBirth;
-        this.bloodSugarReadings = bloodSugarReadings;
-    }
+    // Lombok handles constructors via @NoArgsConstructor, @AllArgsConstructor, and @Builder
 
     // Static factory method to convert from Entity to DTO
     public static PatientDTO fromEntity(Patient patient) {
@@ -42,44 +54,5 @@ public class PatientDTO {
         );
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public List<BloodSugarReadingDTO> getBloodSugarReadings() {
-        return bloodSugarReadings;
-    }
-
-    public void setBloodSugarReadings(List<BloodSugarReadingDTO> bloodSugarReadings) {
-        this.bloodSugarReadings = bloodSugarReadings;
-    }
+    // Lombok handles getters, setters, equals, hashCode, and toString via @Data
 }

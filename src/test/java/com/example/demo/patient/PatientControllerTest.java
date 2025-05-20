@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -103,10 +104,10 @@ public class PatientControllerTest {
     }
 
     @Test
-    void deletePatient_whenPatientExists_shouldReturnOk() throws Exception {
+    void deletePatient_whenPatientExists_shouldReturnNoContent() throws Exception {
         Patient patient = patientRepository.save(new Patient("Delete", "Me", LocalDate.now()));
         mockMvc.perform(delete("/api/patients/" + patient.getId()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/patients/" + patient.getId()))
                 .andExpect(status().isNotFound()); // Verify patient is actually deleted
@@ -116,5 +117,49 @@ public class PatientControllerTest {
     void deletePatient_whenPatientDoesNotExist_shouldReturnNotFound() throws Exception {
         mockMvc.perform(delete("/api/patients/999"))
                 .andExpect(status().isNotFound());
+    }
+
+    // Input validation tests
+    @Test
+    void createPatient_withEmptyFirstName_shouldReturnBadRequest() throws Exception {
+        PatientDTO patientDTO = new PatientDTO(null, "", "Doe", LocalDate.of(1990, 1, 1), new ArrayList<>());
+        
+        mockMvc.perform(post("/api/patients")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(patientDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createPatient_withNullLastName_shouldReturnBadRequest() throws Exception {
+        PatientDTO patientDTO = new PatientDTO(null, "John", null, LocalDate.of(1990, 1, 1), new ArrayList<>());
+        
+        mockMvc.perform(post("/api/patients")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(patientDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createPatient_withFutureDateOfBirth_shouldReturnBadRequest() throws Exception {
+        LocalDate futureDate = LocalDate.now().plusDays(1);
+        PatientDTO patientDTO = new PatientDTO(null, "John", "Doe", futureDate, new ArrayList<>());
+        
+        mockMvc.perform(post("/api/patients")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(patientDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updatePatient_withInvalidIdMismatch_shouldReturnBadRequest() throws Exception {
+        Patient patient = patientRepository.save(new Patient("Original", "Patient", LocalDate.of(1990, 1, 1)));
+        PatientDTO updatedDetails = new PatientDTO(patient.getId() + 1, "Updated", "Patient", LocalDate.of(1990, 1, 1), new ArrayList<>());
+        
+        mockMvc.perform(put("/api/patients/" + patient.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updatedDetails)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("ID in path does not match ID in request body")));
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -116,7 +117,8 @@ public class BloodSugarReadingControllerTest {
 
         // Attempt to fetch reading using testPatient's ID but with a reading belonging to otherPatient
         mockMvc.perform(get("/api/patients/{patientId}/readings/{readingId}", testPatient.getId(), savedReading.getId()))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Reading does not belong to the specified patient")));
     }
 
     @Test
@@ -136,15 +138,93 @@ public class BloodSugarReadingControllerTest {
     }
 
     @Test
-    void deleteReading_whenExistsAndBelongs_shouldReturnOk() throws Exception {
+    void deleteReading_whenExistsAndBelongs_shouldReturnNoContent() throws Exception {
         BloodSugarReading reading = new BloodSugarReading(LocalDateTime.now(), 90.0, "mg/dL");
         reading.setPatient(testPatient);
         bloodSugarReadingRepository.save(reading);
 
         mockMvc.perform(delete("/api/patients/{patientId}/readings/{readingId}", testPatient.getId(), reading.getId()))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/patients/{patientId}/readings/{readingId}", testPatient.getId(), reading.getId()))
                 .andExpect(status().isNotFound()); // Verify deleted
+    }
+
+    // Input validation tests
+    @Test
+    void createReading_withNegativeLevel_shouldReturnBadRequest() throws Exception {
+        BloodSugarReadingDTO readingDTO = new BloodSugarReadingDTO(null, LocalDateTime.now(), -10.0, "mg/dL", testPatient.getId());
+
+        mockMvc.perform(post("/api/patients/{patientId}/readings", testPatient.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(readingDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createReading_withFutureTimestamp_shouldReturnBadRequest() throws Exception {
+        LocalDateTime futureTime = LocalDateTime.now().plus(1, ChronoUnit.DAYS);
+        BloodSugarReadingDTO readingDTO = new BloodSugarReadingDTO(null, futureTime, 120.0, "mg/dL", testPatient.getId());
+
+        mockMvc.perform(post("/api/patients/{patientId}/readings", testPatient.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(readingDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createReading_withEmptyUnit_shouldReturnBadRequest() throws Exception {
+        BloodSugarReadingDTO readingDTO = new BloodSugarReadingDTO(null, LocalDateTime.now(), 120.0, "", testPatient.getId());
+
+        mockMvc.perform(post("/api/patients/{patientId}/readings", testPatient.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(readingDTO)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateReading_withIdMismatch_shouldReturnBadRequest() throws Exception {
+        BloodSugarReading existingReading = new BloodSugarReading(LocalDateTime.now().minusHours(1), 100.0, "mg/dL");
+        existingReading.setPatient(testPatient);
+        BloodSugarReading savedReading = bloodSugarReadingRepository.save(existingReading);
+
+        BloodSugarReadingDTO updatedReading = new BloodSugarReadingDTO(
+            savedReading.getId() + 1, // Different ID
+            LocalDateTime.now(),
+            105.0,
+            "mg/dL",
+            testPatient.getId()
+        );
+
+        mockMvc.perform(put("/api/patients/{patientId}/readings/{readingId}", 
+                          testPatient.getId(), savedReading.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updatedReading)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("ID in path does not match ID in request body")));
+    }
+
+    @Test
+    void updateReading_withPatientIdMismatch_shouldReturnBadRequest() throws Exception {
+        BloodSugarReading existingReading = new BloodSugarReading(LocalDateTime.now().minusHours(1), 100.0, "mg/dL");
+        existingReading.setPatient(testPatient);
+        BloodSugarReading savedReading = bloodSugarReadingRepository.save(existingReading);
+
+        Patient otherPatient = patientRepository.save(new Patient("Other", "Patient", LocalDate.now()));
+        
+        BloodSugarReadingDTO updatedReading = new BloodSugarReadingDTO(
+            savedReading.getId(),
+            LocalDateTime.now(),
+            105.0,
+            "mg/dL",
+            otherPatient.getId() // Different patient ID
+        );
+
+        mockMvc.perform(put("/api/patients/{patientId}/readings/{readingId}", 
+                          testPatient.getId(), savedReading.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updatedReading)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("patientId in path does not match patientId in request body")));
     }
 }

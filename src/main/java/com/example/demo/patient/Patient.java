@@ -1,12 +1,26 @@
 package com.example.demo.patient;
 
+import com.example.demo.constants.ApiConstants;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @Entity
-@Table(name = "patients")
+@Table(name = ApiConstants.Tables.PATIENTS)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Patient {
 
     @Id
@@ -25,56 +39,14 @@ public class Patient {
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BloodSugarReading> bloodSugarReadings = new ArrayList<>();
 
-    // Constructors
-    public Patient() {
-    }
-
+    @Builder
     public Patient(String firstName, String lastName, java.time.LocalDate dateOfBirth) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.dateOfBirth = dateOfBirth;
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public java.time.LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(java.time.LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public List<BloodSugarReading> getBloodSugarReadings() {
-        return bloodSugarReadings;
-    }
-
-    public void setBloodSugarReadings(List<BloodSugarReading> bloodSugarReadings) {
-        this.bloodSugarReadings = bloodSugarReadings;
-    }
+    // Lombok handles getters and setters via @Getter and @Setter
 
     public void addBloodSugarReading(BloodSugarReading reading) {
         bloodSugarReadings.add(reading);
@@ -86,26 +58,5 @@ public class Patient {
         reading.setPatient(null);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Patient patient = (Patient) o;
-        return Objects.equals(id, patient.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Patient{" +
-               "id=" + id +
-               ", firstName='" + firstName + '\'' +
-               ", lastName='" + lastName + '\'' +
-               ", dateOfBirth=" + dateOfBirth +
-               '}';
-    }
+    // Lombok handles equals, hashCode, and toString via @EqualsAndHashCode and @ToString
 }

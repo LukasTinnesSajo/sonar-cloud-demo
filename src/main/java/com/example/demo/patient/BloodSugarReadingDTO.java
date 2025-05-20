@@ -1,25 +1,39 @@
 package com.example.demo.patient;
 
+import com.example.demo.constants.ApiConstants;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.constraints.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@EqualsAndHashCode
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class BloodSugarReadingDTO {
     private Long id;
+    
+    @NotNull(message = ApiConstants.Validation.TIMESTAMP_REQUIRED)
+    @PastOrPresent(message = ApiConstants.Validation.TIMESTAMP_PAST_OR_PRESENT)
     private LocalDateTime timestamp;
-    private double level;
+    
+    @NotNull(message = ApiConstants.Validation.LEVEL_REQUIRED)
+    @DecimalMin(value = "0.0", message = ApiConstants.Validation.LEVEL_POSITIVE)
+    @DecimalMax(value = "1000.0", message = ApiConstants.Validation.LEVEL_MAX)
+    private Double level;
+    
+    @NotBlank(message = ApiConstants.Validation.UNIT_REQUIRED)
+    @Pattern(regexp = "^(mg/dL|mmol/L)$", message = ApiConstants.Validation.UNIT_PATTERN)
     private String unit;
+    
+    @NotNull(message = ApiConstants.Validation.PATIENT_ID_REQUIRED)
     private Long patientId; // Only include patientId to avoid circular references in JSON if PatientDTO includes readings
 
-    // Constructors
-    public BloodSugarReadingDTO() {
-    }
-
-    public BloodSugarReadingDTO(Long id, LocalDateTime timestamp, double level, String unit, Long patientId) {
-        this.id = id;
-        this.timestamp = timestamp;
-        this.level = level;
-        this.unit = unit;
-        this.patientId = patientId;
-    }
+    // Lombok handles constructors via @NoArgsConstructor, @AllArgsConstructor, and @Builder
 
     // Static factory method to convert from Entity to DTO
     public static BloodSugarReadingDTO fromEntity(BloodSugarReading reading) {
@@ -36,44 +50,5 @@ public class BloodSugarReadingDTO {
         );
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public double getLevel() {
-        return level;
-    }
-
-    public void setLevel(double level) {
-        this.level = level;
-    }
-
-    public String getUnit() {
-        return unit;
-    }
-
-    public void setUnit(String unit) {
-        this.unit = unit;
-    }
-
-    public Long getPatientId() {
-        return patientId;
-    }
-
-    public void setPatientId(Long patientId) {
-        this.patientId = patientId;
-    }
+    // Lombok handles getters, setters, equals, hashCode, and toString via @Data
 }

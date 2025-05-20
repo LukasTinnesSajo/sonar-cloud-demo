@@ -1,29 +1,33 @@
 package com.example.demo.patient;
 
+import com.example.demo.constants.ApiConstants;
+import com.example.demo.exception.ResourceNotFoundException;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.stream.Collectors;
-import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.patient.BloodSugarReadingDTO;
+import com.example.demo.patient.BloodSugarReadingRepository;
+import com.example.demo.patient.PatientRepository;
 
 @RestController
-@RequestMapping("/api/patients/{patientId}/readings")
+@RequestMapping(ApiConstants.Paths.API_PATIENTS_READINGS)
+@RequiredArgsConstructor
 public class BloodSugarReadingController {
 
     private final BloodSugarReadingRepository bloodSugarReadingRepository;
     private final PatientRepository patientRepository;
 
-    @Autowired
-    public BloodSugarReadingController(BloodSugarReadingRepository bloodSugarReadingRepository, PatientRepository patientRepository) {
-        this.bloodSugarReadingRepository = bloodSugarReadingRepository;
-        this.patientRepository = patientRepository;
-    }
+
 
     @PostMapping
-    public ResponseEntity<?> createReading(@PathVariable Long patientId, @RequestBody BloodSugarReadingDTO readingDTO) {
+    public ResponseEntity<BloodSugarReadingDTO> createReading(
+            @PathVariable Long patientId, 
+            @Valid @RequestBody BloodSugarReadingDTO readingDTO) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
         
@@ -37,7 +41,7 @@ public class BloodSugarReadingController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllReadingsForPatient(@PathVariable Long patientId) {
+    public ResponseEntity<List<BloodSugarReadingDTO>> getAllReadingsForPatient(@PathVariable Long patientId) {
         // Ensure patient exists
         patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
@@ -49,7 +53,7 @@ public class BloodSugarReadingController {
     }
 
     @GetMapping("/{readingId}")
-    public ResponseEntity<Object> getReadingById(@PathVariable Long patientId, @PathVariable Long readingId) {
+    public ResponseEntity<BloodSugarReadingDTO> getReadingById(@PathVariable Long patientId, @PathVariable Long readingId) {
         // Ensure patient exists
         patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
@@ -58,13 +62,26 @@ public class BloodSugarReadingController {
                 .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
 
         if (!reading.getPatient().getId().equals(patientId)) {
-            return new ResponseEntity<>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
+            throw new IllegalArgumentException("Reading does not belong to the specified patient.");
         }
         return new ResponseEntity<>(BloodSugarReadingDTO.fromEntity(reading), HttpStatus.OK);
     }
 
     @PutMapping("/{readingId}")
-    public ResponseEntity<Object> updateReading(@PathVariable Long patientId, @PathVariable Long readingId, @RequestBody BloodSugarReadingDTO readingDetailsDTO) {
+    public ResponseEntity<BloodSugarReadingDTO> updateReading(
+            @PathVariable Long patientId,
+            @PathVariable Long readingId,
+            @Valid @RequestBody BloodSugarReadingDTO readingDetailsDTO) {
+        // Check if the readingId in the path matches the ID in the request body
+        if (!readingId.equals(readingDetailsDTO.getId())) {
+            throw new IllegalArgumentException(ApiConstants.ExceptionMessage.ID_MISMATCH);
+        }
+        
+        // Check if the patientId in the path matches the patientId in the request body
+        if (!patientId.equals(readingDetailsDTO.getPatientId())) {
+            throw new IllegalArgumentException(ApiConstants.ExceptionMessage.PATIENT_ID_MISMATCH);
+        }
+
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
 
@@ -72,7 +89,7 @@ public class BloodSugarReadingController {
                 .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
 
         if (!reading.getPatient().getId().equals(patient.getId())) {
-            return new ResponseEntity<>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
+            throw new IllegalArgumentException("Reading does not belong to the specified patient.");
         }
 
         reading.setTimestamp(readingDetailsDTO.getTimestamp());
@@ -83,7 +100,7 @@ public class BloodSugarReadingController {
     }
 
     @DeleteMapping("/{readingId}")
-    public ResponseEntity<Object> deleteReading(@PathVariable Long patientId, @PathVariable Long readingId) {
+    public ResponseEntity<Void> deleteReading(@PathVariable Long patientId, @PathVariable Long readingId) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
 
@@ -91,11 +108,11 @@ public class BloodSugarReadingController {
                 .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
 
         if (!reading.getPatient().getId().equals(patient.getId())) {
-            return new ResponseEntity<>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
+            throw new IllegalArgumentException("Reading does not belong to the specified patient.");
         }
 
         bloodSugarReadingRepository.delete(reading);
-        return ResponseEntity.ok().build(); // .<Object>build() is not strictly necessary when method returns ResponseEntity<Object>
+        return ResponseEntity.noContent().build();
     }
 
 }
