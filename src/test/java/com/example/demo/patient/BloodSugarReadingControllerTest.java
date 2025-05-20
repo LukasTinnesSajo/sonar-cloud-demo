@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -109,15 +110,72 @@ class BloodSugarReadingControllerTest {
 
     @Test
     void getReadingById_whenReadingDoesNotBelongToPatient_shouldReturnBadRequest() throws Exception {
+        // Create a different patient
         Patient otherPatient = patientRepository.save(new Patient("Other", "Patient", LocalDate.now()));
+        
+        // Create a reading that belongs to the other patient
         BloodSugarReading reading = new BloodSugarReading(LocalDateTime.now(), 140.0, "mg/dL");
         reading.setPatient(otherPatient);
         BloodSugarReading savedReading = bloodSugarReadingRepository.save(reading);
 
-        // Attempt to fetch reading using testPatient's ID but with a reading belonging to otherPatient
+        // Attempt to fetch the reading using testPatient's ID (should fail)
         mockMvc.perform(get("/api/patients/{patientId}/readings/{readingId}", testPatient.getId(), savedReading.getId()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Reading does not belong to the specified patient")));
+                
+        // Verify that the reading still exists in the database
+        assertTrue(bloodSugarReadingRepository.findById(savedReading.getId()).isPresent());
+    }
+    
+    @Test
+    void updateReading_whenReadingDoesNotBelongToPatient_shouldReturnBadRequest() throws Exception {
+        // Create a different patient
+        Patient otherPatient = patientRepository.save(new Patient("Other", "Patient", LocalDate.now()));
+        
+        // Create a reading that belongs to the other patient
+        BloodSugarReading reading = new BloodSugarReading(LocalDateTime.now(), 140.0, "mg/dL");
+        reading.setPatient(otherPatient);
+        BloodSugarReading savedReading = bloodSugarReadingRepository.save(reading);
+        
+        // Create update DTO
+        BloodSugarReadingDTO updateDto = new BloodSugarReadingDTO(
+            savedReading.getId(),
+            LocalDateTime.now(),
+            150.0,
+            "mg/dL",
+            testPatient.getId() // This is the key part - trying to update with a different patient ID
+        );
+
+        // Attempt to update the reading using testPatient's ID (should fail)
+        mockMvc.perform(put("/api/patients/{patientId}/readings/{readingId}", testPatient.getId(), savedReading.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Reading does not belong to the specified patient")));
+                
+        // Verify that the reading was not updated
+        BloodSugarReading updatedReading = bloodSugarReadingRepository.findById(savedReading.getId())
+                .orElseThrow(() -> new AssertionError("Reading should still exist"));
+        assertEquals(140.0, updatedReading.getLevel()); // Level should not have changed
+    }
+    
+    @Test
+    void deleteReading_whenReadingDoesNotBelongToPatient_shouldReturnBadRequest() throws Exception {
+        // Create a different patient
+        Patient otherPatient = patientRepository.save(new Patient("Other", "Patient", LocalDate.now()));
+        
+        // Create a reading that belongs to the other patient
+        BloodSugarReading reading = new BloodSugarReading(LocalDateTime.now(), 140.0, "mg/dL");
+        reading.setPatient(otherPatient);
+        BloodSugarReading savedReading = bloodSugarReadingRepository.save(reading);
+
+        // Attempt to delete the reading using testPatient's ID (should fail)
+        mockMvc.perform(delete("/api/patients/{patientId}/readings/{readingId}", testPatient.getId(), savedReading.getId()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Reading does not belong to the specified patient")));
+                
+        // Verify that the reading was not deleted
+        assertTrue(bloodSugarReadingRepository.findById(savedReading.getId()).isPresent());
     }
 
     @Test
