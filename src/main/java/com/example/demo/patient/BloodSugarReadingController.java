@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.example.demo.exception.ResourceNotFoundException;
 
 @RestController
 @RequestMapping("/api/patients/{patientId}/readings")
@@ -23,79 +24,78 @@ public class BloodSugarReadingController {
 
     @PostMapping
     public ResponseEntity<?> createReading(@PathVariable Long patientId, @RequestBody BloodSugarReadingDTO readingDTO) {
-        return patientRepository.findById(patientId)
-                .map(patient -> {
-                    BloodSugarReading reading = new BloodSugarReading();
-                    reading.setPatient(patient);
-                    reading.setTimestamp(readingDTO.getTimestamp());
-                    reading.setLevel(readingDTO.getLevel());
-                    reading.setUnit(readingDTO.getUnit());
-                    BloodSugarReading savedReading = bloodSugarReadingRepository.save(reading);
-                    return new ResponseEntity<Object>(toBloodSugarReadingDTO(savedReading), HttpStatus.CREATED);
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Patient not found with id: " + patientId));
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+        
+        BloodSugarReading reading = new BloodSugarReading();
+        reading.setPatient(patient);
+        reading.setTimestamp(readingDTO.getTimestamp());
+        reading.setLevel(readingDTO.getLevel());
+        reading.setUnit(readingDTO.getUnit());
+        BloodSugarReading savedReading = bloodSugarReadingRepository.save(reading);
+        return new ResponseEntity<>(BloodSugarReadingDTO.fromEntity(savedReading), HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<?> getAllReadingsForPatient(@PathVariable Long patientId) {
-         if (!patientRepository.existsById(patientId)) {
-            return new ResponseEntity<Object>("Patient not found with id: " + patientId, HttpStatus.NOT_FOUND);
-        }
+        // Ensure patient exists
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+
         List<BloodSugarReadingDTO> readingDTOs = bloodSugarReadingRepository.findByPatientId(patientId).stream()
-                .map(this::toBloodSugarReadingDTO)
+                .map(BloodSugarReadingDTO::fromEntity)
                 .collect(Collectors.toList());
-        return new ResponseEntity<Object>(readingDTOs, HttpStatus.OK);
+        return new ResponseEntity<>(readingDTOs, HttpStatus.OK);
     }
 
     @GetMapping("/{readingId}")
-    public ResponseEntity<?> getReadingById(@PathVariable Long patientId, @PathVariable Long readingId) {
-        return bloodSugarReadingRepository.findById(readingId)
-                .map(reading -> {
-                    if (!reading.getPatient().getId().equals(patientId)) {
-                        return new ResponseEntity<Object>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
-                    }
-                    return new ResponseEntity<Object>(toBloodSugarReadingDTO(reading), HttpStatus.OK);
-                })
-                .orElse(new ResponseEntity<Object>("Reading not found with id: " + readingId, HttpStatus.NOT_FOUND));
+    public ResponseEntity<Object> getReadingById(@PathVariable Long patientId, @PathVariable Long readingId) {
+        // Ensure patient exists
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+
+        BloodSugarReading reading = bloodSugarReadingRepository.findById(readingId)
+                .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
+
+        if (!reading.getPatient().getId().equals(patientId)) {
+            return new ResponseEntity<>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(BloodSugarReadingDTO.fromEntity(reading), HttpStatus.OK);
     }
 
     @PutMapping("/{readingId}")
-    public ResponseEntity<?> updateReading(@PathVariable Long patientId, @PathVariable Long readingId, @RequestBody BloodSugarReadingDTO readingDetailsDTO) {
-        if (!patientRepository.existsById(patientId)) {
-             return new ResponseEntity<Object>("Patient not found with id: " + patientId, HttpStatus.NOT_FOUND);
+    public ResponseEntity<Object> updateReading(@PathVariable Long patientId, @PathVariable Long readingId, @RequestBody BloodSugarReadingDTO readingDetailsDTO) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+
+        BloodSugarReading reading = bloodSugarReadingRepository.findById(readingId)
+                .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
+
+        if (!reading.getPatient().getId().equals(patient.getId())) {
+            return new ResponseEntity<>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
         }
-        return bloodSugarReadingRepository.findById(readingId)
-                .map(reading -> {
-                    if (!reading.getPatient().getId().equals(patientId)) {
-                        return new ResponseEntity<Object>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
-                    }
-                    reading.setTimestamp(readingDetailsDTO.getTimestamp());
-                    reading.setLevel(readingDetailsDTO.getLevel());
-                    reading.setUnit(readingDetailsDTO.getUnit());
-                    BloodSugarReading updatedReading = bloodSugarReadingRepository.save(reading);
-                    return new ResponseEntity<Object>(toBloodSugarReadingDTO(updatedReading), HttpStatus.OK);
-                })
-                .orElse(new ResponseEntity<Object>("Reading not found with id: " + readingId, HttpStatus.NOT_FOUND));
+
+        reading.setTimestamp(readingDetailsDTO.getTimestamp());
+        reading.setLevel(readingDetailsDTO.getLevel());
+        reading.setUnit(readingDetailsDTO.getUnit());
+        BloodSugarReading updatedReading = bloodSugarReadingRepository.save(reading);
+        return new ResponseEntity<>(BloodSugarReadingDTO.fromEntity(updatedReading), HttpStatus.OK);
     }
 
     @DeleteMapping("/{readingId}")
-    public ResponseEntity<?> deleteReading(@PathVariable Long patientId, @PathVariable Long readingId) {
-         if (!patientRepository.existsById(patientId)) {
-            return new ResponseEntity<Object>("Patient not found with id: " + patientId, HttpStatus.NOT_FOUND);
+    public ResponseEntity<Object> deleteReading(@PathVariable Long patientId, @PathVariable Long readingId) {
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId));
+
+        BloodSugarReading reading = bloodSugarReadingRepository.findById(readingId)
+                .orElseThrow(() -> new ResourceNotFoundException("BloodSugarReading", "id", readingId));
+
+        if (!reading.getPatient().getId().equals(patient.getId())) {
+            return new ResponseEntity<>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
         }
-        return bloodSugarReadingRepository.findById(readingId)
-                .map(reading -> {
-                     if (!reading.getPatient().getId().equals(patientId)) {
-                        return new ResponseEntity<Object>("Reading does not belong to the specified patient.", HttpStatus.BAD_REQUEST);
-                    }
-                    bloodSugarReadingRepository.delete(reading);
-                    return ResponseEntity.ok().<Object>build(); // Return type compatible with Object for consistency
-                })
-                .orElse(new ResponseEntity<Object>("Reading not found with id: " + readingId, HttpStatus.NOT_FOUND));
+
+        bloodSugarReadingRepository.delete(reading);
+        return ResponseEntity.ok().build(); // .<Object>build() is not strictly necessary when method returns ResponseEntity<Object>
     }
 
-    // Helper method to convert BloodSugarReading Entity to BloodSugarReadingDTO
-    private BloodSugarReadingDTO toBloodSugarReadingDTO(BloodSugarReading reading) {
-        return new BloodSugarReadingDTO(reading.getId(), reading.getTimestamp(), reading.getLevel(), reading.getUnit(), reading.getPatient().getId());
-    }
 }

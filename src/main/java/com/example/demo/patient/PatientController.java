@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.example.demo.exception.ResourceNotFoundException;
 
 @RestController
 @RequestMapping("/api/patients")
@@ -28,58 +29,43 @@ public class PatientController {
         // Blood sugar readings are typically added via their own endpoint
 
         Patient savedPatient = patientRepository.save(patient);
-        return new ResponseEntity<>(toPatientDTO(savedPatient), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(PatientDTO.fromEntity(savedPatient));
     }
 
     @GetMapping
     public ResponseEntity<List<PatientDTO>> getAllPatients() {
         List<PatientDTO> patientDTOs = patientRepository.findAll().stream()
-                .map(this::toPatientDTO)
+                .map(PatientDTO::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(patientDTOs);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PatientDTO> getPatientById(@PathVariable Long id) {
-        return patientRepository.findById(id)
-                .map(patient -> ResponseEntity.ok(toPatientDTO(patient)))
-                .orElse(ResponseEntity.notFound().build());
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
+        return ResponseEntity.ok(PatientDTO.fromEntity(patient));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PatientDTO> updatePatient(@PathVariable Long id, @RequestBody PatientDTO patientDetailsDTO) {
-        return patientRepository.findById(id)
-                .map(patient -> {
-                    patient.setFirstName(patientDetailsDTO.getFirstName());
-                    patient.setLastName(patientDetailsDTO.getLastName());
-                    patient.setDateOfBirth(patientDetailsDTO.getDateOfBirth());
-                    // Blood sugar readings are managed via their dedicated controller
-                    Patient updatedPatient = patientRepository.save(patient);
-                    return ResponseEntity.ok(toPatientDTO(updatedPatient));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
+        
+        patient.setFirstName(patientDetailsDTO.getFirstName());
+        patient.setLastName(patientDetailsDTO.getLastName());
+        patient.setDateOfBirth(patientDetailsDTO.getDateOfBirth());
+        // Blood sugar readings are managed via their dedicated controller
+        Patient updatedPatient = patientRepository.save(patient);
+        return ResponseEntity.ok(PatientDTO.fromEntity(updatedPatient));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePatient(@PathVariable Long id) {
-        return patientRepository.findById(id)
-                .map(patient -> {
-                    patientRepository.delete(patient);
-                    return ResponseEntity.ok().<Void>build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
+        patientRepository.delete(patient);
+        return ResponseEntity.ok().<Void>build();
     }
 
-    // Helper method to convert Patient Entity to PatientDTO
-    private PatientDTO toPatientDTO(Patient patient) {
-        List<BloodSugarReadingDTO> readingDTOs = patient.getBloodSugarReadings().stream()
-                .map(this::toBloodSugarReadingDTO)
-                .collect(Collectors.toList());
-        return new PatientDTO(patient.getId(), patient.getFirstName(), patient.getLastName(), patient.getDateOfBirth(), readingDTOs);
-    }
-
-    // Helper method to convert BloodSugarReading Entity to BloodSugarReadingDTO
-    private BloodSugarReadingDTO toBloodSugarReadingDTO(BloodSugarReading reading) {
-        return new BloodSugarReadingDTO(reading.getId(), reading.getTimestamp(), reading.getLevel(), reading.getUnit(), reading.getPatient().getId());
-    }
 }

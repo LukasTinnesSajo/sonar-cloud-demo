@@ -21,6 +21,21 @@ public class BloodSugarReadingDTO {
         this.patientId = patientId;
     }
 
+    // Static factory method to convert from Entity to DTO
+    public static BloodSugarReadingDTO fromEntity(BloodSugarReading reading) {
+        if (reading == null) {
+            return null;
+        }
+        Long patientId = (reading.getPatient() != null) ? reading.getPatient().getId() : null;
+        return new BloodSugarReadingDTO(
+            reading.getId(),
+            reading.getTimestamp(),
+            reading.getLevel(),
+            reading.getUnit(),
+            patientId
+        );
+    }
+
     // Getters and Setters
     public Long getId() {
         return id;

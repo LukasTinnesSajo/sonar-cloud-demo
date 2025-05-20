@@ -22,6 +22,26 @@ public class PatientDTO {
         this.bloodSugarReadings = bloodSugarReadings;
     }
 
+    // Static factory method to convert from Entity to DTO
+    public static PatientDTO fromEntity(Patient patient) {
+        if (patient == null) {
+            return null;
+        }
+        List<BloodSugarReadingDTO> readingDTOs = patient.getBloodSugarReadings() != null ? 
+            patient.getBloodSugarReadings().stream()
+                   .map(BloodSugarReadingDTO::fromEntity) // Assumes BloodSugarReadingDTO will also have fromEntity
+                   .collect(java.util.stream.Collectors.toList()) :
+            java.util.Collections.emptyList();
+            
+        return new PatientDTO(
+            patient.getId(),
+            patient.getFirstName(),
+            patient.getLastName(),
+            patient.getDateOfBirth(),
+            readingDTOs
+        );
+    }
+
     // Getters and Setters
     public Long getId() {
         return id;
