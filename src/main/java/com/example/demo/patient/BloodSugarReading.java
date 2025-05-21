@@ -22,10 +22,10 @@ public class BloodSugarReading {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, targetEntity = Patient.class)
     @JoinColumn(name = ApiConstants.Columns.PATIENT_ID, nullable = false)
     @JsonBackReference
-    private Patient patient;
+    private PatientReference patient;
 
     @Column(nullable = false)
     private LocalDateTime timestamp;

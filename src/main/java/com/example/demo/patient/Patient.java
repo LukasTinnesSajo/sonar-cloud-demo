@@ -21,7 +21,7 @@ import java.util.List;
 @Builder
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Patient {
+public class Patient implements PatientReference {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
