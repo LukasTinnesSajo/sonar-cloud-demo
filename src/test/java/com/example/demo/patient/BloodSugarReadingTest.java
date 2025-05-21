@@ -95,7 +95,7 @@ class BloodSugarReadingTest {
 
         // Test basic equality contract
         assertEquals(reading1, reading1, "Object should be equal to itself");
-        assertNotEquals(reading1, null, "Should not be equal to null");
+        assertNotEquals(null, reading1, "Should not be equal to null");
         assertNotEquals(reading1, new Object(), "Should not be equal to different type");
         
         // Test actual behavior - note this might not be the intended behavior
