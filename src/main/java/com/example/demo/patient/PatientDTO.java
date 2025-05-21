@@ -2,7 +2,10 @@ package com.example.demo.patient;
 
 import com.example.demo.constants.ApiConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -42,7 +45,7 @@ public class PatientDTO {
         List<BloodSugarReadingDTO> readingDTOs = patient.getBloodSugarReadings() != null ? 
             patient.getBloodSugarReadings().stream()
                    .map(BloodSugarReadingDTO::fromEntity) // Assumes BloodSugarReadingDTO will also have fromEntity
-                   .collect(java.util.stream.Collectors.toList()) :
+                   .toList() :
             java.util.Collections.emptyList();
             
         return new PatientDTO(

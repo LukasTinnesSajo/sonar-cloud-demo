@@ -27,9 +27,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     // Inner class for a structured error response (optional but good practice)
     private static class ApiError {
-        private HttpStatus status;
-        private String message;
-        private String debugMessage; // For more detailed error messages not exposed to the client
+        private final HttpStatus status;
+        private final String message;
+        private final String debugMessage; // For more detailed error messages not exposed to the client
 
         public ApiError(HttpStatus status, String message, Throwable ex) {
             this.status = status;
