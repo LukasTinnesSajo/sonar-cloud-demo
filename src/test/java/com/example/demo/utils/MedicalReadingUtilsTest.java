@@ -1,4 +1,4 @@
-package com.example.medical;
+package com.example.demo.utils;
 
 import org.junit.jupiter.api.Test;
 
@@ -25,11 +25,6 @@ class MedicalReadingUtilsTest {
     @Test
     void testCalculateDifference() {
         assertEquals(20.0, MedicalReadingUtils.calculateDifference(80.0, 100.0), 0.001);
-    }
-
-    @Test
-    void testCalculateDifferenceDuplicate() {
-        assertEquals(-10.0, MedicalReadingUtils.calculateDifferenceDuplicate(50.0, 40.0), 0.001);
     }
 
     @Test
